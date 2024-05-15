@@ -316,6 +316,7 @@ if __name__ == "__main__":
         "optimizer": OPTIMIZER,
     }
     wandb.watch(model)
+
     train, test, val = create_datasets()
 
     optimizer = get_optimizer(OPTIMIZER)
