@@ -1,5 +1,4 @@
 /.venv
-/other-work/BERT_propaganda_detection/bert-pd-env
 
 **/.DS_Store
 
@@ -7,5 +6,5 @@
 
 /wandb
 /other-work
-/model
 
+/models

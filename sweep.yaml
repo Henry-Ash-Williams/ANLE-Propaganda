@@ -3,13 +3,13 @@ program: "bert-propaganda-classifier.py"
 method: random
 metric: 
   goal: "maximize"
-  name: "test_f1"
+  name: "test.f1"
 parameters: 
   learning_rate: 
     min: 0.01
     max: 0.1
   batch_size: 
-    values: [16, 32, 64, 128]
+    values: [16, 32, 64]
   dropout_rate: 
     min: 0.3
     max: 0.5
@@ -17,4 +17,4 @@ parameters:
     min: 0.00001
     max: 0.001
   optimizer: 
-    values: ['AdamW', 'RMSProp', 'SGD']
+    values: ['AdamW', 'RMSprop', 'SGD']

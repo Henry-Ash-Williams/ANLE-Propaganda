@@ -291,10 +291,10 @@ def get_optimizer(optimizer_name: str) -> Optimizer:
 
     Args:
         optimizer_name (str): The name of the optimizer class.
-        
+
     Returns:
         torch.optim.Optimizer: An instance of the specified optimizer class.
-        
+
     Example:
         optimizer = get_optimizer('Adam')
     """
@@ -350,15 +350,17 @@ if __name__ == "__main__":
             zero_division=0.0,
         )
         avg_val_loss = total_val_loss / len(val)
-        wandb.log({
-            "val": [
-                {"acc": val_metrics["accuracy"]},
-                {"loss": avg_val_loss},
-                {"precision": val_metrics["weighted avg"]["precision"]},
-                {"recall": val_metrics["weighted avg"]["recall"]},
-                {"f1-score": val_metrics["weighted avg"]["f1-score"]},
-            ]
-        })
+        wandb.log(
+            {
+                "val": {
+                    "acc": val_metrics["accuracy"],
+                    "loss": avg_val_loss,
+                    "precision": val_metrics["weighted avg"]["precision"],
+                    "recall": val_metrics["weighted avg"]["recall"],
+                    "f1-score": val_metrics["weighted avg"]["f1-score"],
+                }
+            }
+        )
 
     test_predictions, test_labels = test_evaluation(test)
     test_metrics = classification_report(
@@ -369,11 +371,21 @@ if __name__ == "__main__":
         zero_division=0.0,
     )
     model.save_pretrained(f"./models/{MODEL_NAME}-propaganda-classification")
-    wandb.log_artifact(f"./models/{MODEL_NAME}-binary-propaganda-detection")
+    # wandb.log_artifact(f"./models/{MODEL_NAME}-binary-propaganda-detection")
     wandb.run.summary["test_accuracy"] = test_metrics["accuracy"]
     wandb.run.summary["test_precision"] = test_metrics["weighted avg"]["precision"]
     wandb.run.summary["test_recall"] = test_metrics["weighted avg"]["recall"]
     wandb.run.summary["test_f1"] = test_metrics["weighted avg"]["f1-score"]
+    wandb.log(
+        {
+            "test": {
+                "accuracy": test_metrics["accuracy"],
+                "precision": test_metrics["weighted avg"]["precision"],
+                "recall": test_metrics["weighted avg"]["recall"],
+                "f1": test_metrics["weighted avg"]["f1-score"],
+            }
+        }
+    )
 
     if GENERATE_CONFUSION_MATRIX:
         test_labels = [
