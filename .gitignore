@@ -1,0 +1,11 @@
+/.venv
+/other-work/BERT_propaganda_detection/bert-pd-env
+
+**/.DS_Store
+
+*.zip
+
+/wandb
+/other-work
+/model
+
