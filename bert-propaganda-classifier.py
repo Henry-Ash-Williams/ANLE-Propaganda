@@ -139,11 +139,29 @@ def evaluate(
 
 
 def test_evaluation(dataloader: DataLoader) -> Tuple[List[np.int32], List[np.int32]]:
+    """
+    Evaluate the model using the provided dataloader.
+
+    Args:
+        dataloader (DataLoader): DataLoader object for test/validation data.
+
+    Returns:
+        Tuple[List[np.int32], List[np.int32]]: Predicted labels and true labels.
+    """
     evaluation = evaluate(dataloader)
     return evaluation[0], evaluation[1]
 
 
 def validation(dataloader: DataLoader) -> Tuple[List[np.int32], List[np.int32], int]:
+    """
+    Validate the model using the provided dataloader and record total loss.
+
+    Args:
+        dataloader (DataLoader): DataLoader object for validation data.
+
+    Returns:
+        Tuple[List[np.int32], List[np.int32], int]: Predicted labels, true labels, and total evaluation loss.
+    """
     evaluation = evaluate(dataloader, record_total_loss=True)
     return evaluation[0], evaluation[1], evaluation[2]
 
@@ -198,9 +216,9 @@ def encode_dataset(df: pd.DataFrame) -> Tuple[any, any, any]:
         return_tensors="pt",
     )
     return (
-        encoded["input_ids"],
-        encoded["attention_mask"],
-        torch.tensor(df["label"].values),
+        encoded["input_ids"].to(torch.long),
+        encoded["attention_mask"].to(torch.long),
+        torch.tensor(df["label"].values, dtype=torch.long),
     )
 
 
@@ -281,7 +299,7 @@ def plot_confusion_matrix(y_true, y_pred, labels):
     plt.ylabel("Actual")
     plt.title("Confusion Matrix")
     plt.savefig(
-        f"./models/{MODEL_NAME}-propaganda-classification/classification_confusion_matrix.png"
+        f"./models/{MODEL_NAME}-propaganda-detection/classification_confusion_matrix.png"
     )
 
 
@@ -298,25 +316,14 @@ def get_optimizer(optimizer_name: str) -> Optimizer:
     Example:
         optimizer = get_optimizer('Adam')
     """
-    optimizer_cls = getattr(optim, optimizer_name)
+    try:
+        optimizer_cls = getattr(optim, optimizer_name)
+    except AttributeError:
+        print(f"Could not find a pytorch optimizer with the name {optimizer_name}")
     return optimizer_cls(model.parameters(), lr=LR, weight_decay=DECAY)
 
 
-if __name__ == "__main__":
-    wandb.login()
-    wandb.init(
-        project="propaganda-classification", notes="Propaganda classification with BERT"
-    )
-    wandb.config = {
-        "epochs": EPOCHS,
-        "learning_rate": LR,
-        "batch_size": BATCH_SIZE,
-        "dropout_rate": DROPOUT_RATE,
-        "decay_rate": DECAY,
-        "optimizer": OPTIMIZER,
-    }
-    wandb.watch(model)
-
+def train():
     train, test, val = create_datasets()
 
     optimizer = get_optimizer(OPTIMIZER)
@@ -325,7 +332,7 @@ if __name__ == "__main__":
 
     for epoch in range(EPOCHS):
         total_training_loss = 0
-        train_iterator = tqdm(train, desc=f"Training Epoch {epoch + 1}/{EPOCHS}")
+        train_iterator = tqdm(train, desc=f"Training Epoch {epoch + 1:02}/{EPOCHS}")
 
         for input_ids, attention_mask, labels in train_iterator:
             inputs = {
@@ -371,8 +378,45 @@ if __name__ == "__main__":
         target_names=LABELS,
         zero_division=0.0,
     )
-    model.save_pretrained(f"./models/{MODEL_NAME}-propaganda-classification")
-    # wandb.log_artifact(f"./models/{MODEL_NAME}-binary-propaganda-detection")
+    model.save_pretrained(f"./models/{MODEL_NAME}-propaganda-detection")
+
+    if GENERATE_CONFUSION_MATRIX:
+        test_labels = [
+            label_encoder.inverse_transform([label])[0] for label in test_labels
+        ]
+        test_predictions = [
+            label_encoder.inverse_transform([prediction])[0]
+            for prediction in test_predictions
+        ]
+        plot_confusion_matrix(test_labels, test_predictions, labels=LABELS)
+        wandb.log(
+            {
+                "classification_confusion_matrix": wandb.Image(
+                    f"./models/{MODEL_NAME}-propaganda-detection/classification_confusion_matrix.png"
+                )
+            }
+        )
+
+    return test_metrics
+
+
+if __name__ == "__main__":
+    wandb.login()
+    wandb.init(
+        project="propaganda-detection", notes="Propaganda classification with BERT"
+    )
+    wandb.config = {
+        "epochs": EPOCHS,
+        "learning_rate": LR,
+        "batch_size": BATCH_SIZE,
+        "dropout_rate": DROPOUT_RATE,
+        "decay_rate": DECAY,
+        "optimizer": OPTIMIZER,
+    }
+    wandb.watch(model)
+
+    test_metrics = train()
+
     wandb.run.summary["test_accuracy"] = test_metrics["accuracy"]
     wandb.run.summary["test_precision"] = test_metrics["weighted avg"]["precision"]
     wandb.run.summary["test_recall"] = test_metrics["weighted avg"]["recall"]
@@ -388,20 +432,4 @@ if __name__ == "__main__":
         }
     )
 
-    if GENERATE_CONFUSION_MATRIX:
-        test_labels = [
-            label_encoder.inverse_transform([label])[0] for label in test_labels
-        ]
-        test_predictions = [
-            label_encoder.inverse_transform([prediction])[0]
-            for prediction in test_predictions
-        ]
-        plot_confusion_matrix(test_labels, test_predictions, labels=LABELS)
-        wandb.log(
-            {
-                "classification_confusion_matrix": wandb.Image(
-                    f"./models/{MODEL_NAME}-propaganda-classification/classification_confusion_matrix.png"
-                )
-            }
-        )
     wandb.finish()

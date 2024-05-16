@@ -1,18 +1,33 @@
 import warnings
-from typing import Tuple, Literal, Optional
+import argparse
+from typing import Tuple, Literal, Optional, List
 
+import matplotlib.pyplot as plt
+import seaborn as sns
 import pandas as pd
-import torch
-from torch.optim import AdamW
-from transformers import BertTokenizer, BertForSequenceClassification, BertConfig
-from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
-from tqdm import tqdm
-from sklearn.metrics import accuracy_score, classification_report
 import numpy as np
+import torch
+import torch.optim as optim
+from torch.optim import Optimizer
+from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
+from transformers import BertTokenizer, BertForSequenceClassification, BertConfig
+from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split
 import wandb
+from tqdm import tqdm
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
+
+argparser = argparse.ArgumentParser()
+
+argparser.add_argument("--learning_rate", type=float, default=2e-5)
+argparser.add_argument("--batch_size", type=int, default=32)
+argparser.add_argument("--dropout_rate", type=float, default=0.1)
+argparser.add_argument("--weight_decay", type=float, default=0.01)
+argparser.add_argument("--epochs", type=int, default=1)
+argparser.add_argument("--optimizer", type=str, default="AdamW")
+
+args = argparser.parse_args()
 
 DATASET_PATH = (
     "/Users/henrywilliams/Documents/uni/anle/assessment/propaganda_dataset_v2"
@@ -25,17 +40,25 @@ END_OF_SPAN = "<EOS>"
 
 MODEL_NAME = "bert-base-uncased"
 
-BATCH_SIZE = 32
-EPOCHS = 5
-LR = 2e-5
-DECAY = 0.01
-DROPOUT_RATE = 0.1
+LR = args.learning_rate
+BATCH_SIZE = args.batch_size
+DROPOUT_RATE = args.dropout_rate
+DECAY = args.weight_decay
+EPOCHS = args.epochs
+OPTIMIZER = args.optimizer
+
+LABELS = [
+    "not_propaganda",
+    "propaganda",
+]
+
+NUM_LABELS = len(LABELS)
 
 tokenizer = BertTokenizer.from_pretrained(MODEL_NAME)
 
 bert_config = BertConfig.from_pretrained(
     MODEL_NAME,
-    num_labels=2,
+    num_labels=NUM_LABELS,
     output_attentions=False,
     output_hidden_states=False,
 )
@@ -56,16 +79,33 @@ model.to(device)
 
 
 def evaluate(
-    dataloader: DataLoader, validation: bool = False
-) -> Tuple[np.ndarray, np.int64, Optional[float], Optional[float]]:
-    total_loss = 0 if validation else None
-    total_acc = 0 if validation else None
+    dataloader: DataLoader, record_total_loss: bool = False
+) -> Tuple[np.ndarray, np.int64, Optional[float]]:
+    """
+    Evaluate the model on the provided dataset.
+
+    Args:
+        dataset (DataLoader): DataLoader containing the evaluation dataset.
+        record_total_loss (bool, optional): Whether to record the total loss.
+            Defaults to False.
+
+    Returns:
+        Tuple[List[np.ndarray], List[np.int32], Optional[int]]: A tuple containing:
+            - predictions (List[np.ndarray]): Predicted logits for each sample.
+            - true_labels (List[np.int32]): True labels for each sample.
+            - total_loss (Optional[int]): Total loss if `record_total_loss` is True,
+              otherwise None.
+    """
+    total_loss = 0 if record_total_loss else None
     model.eval()
     predictions, true_labels = [], []
 
-    for batch in dataloader:
-        batch = tuple(t.to(device) for t in batch)
-        inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[2]}
+    for input_ids, attention_mask, labels in dataloader:
+        inputs = {
+            "input_ids": input_ids.to(device),
+            "attention_mask": attention_mask.to(device),
+            "labels": labels.to(device),
+        }
 
         with torch.no_grad():
             outputs = model(**inputs)
@@ -74,57 +114,138 @@ def evaluate(
 
         logits = logits.detach().cpu().numpy()
         label_ids = inputs["labels"].cpu().numpy()
-        if validation:
+
+        if record_total_loss:
             total_loss += loss.item()
-            total_acc += accuracy_score(label_ids, logits.argmax(axis=1))
 
         predictions.append(logits)
         true_labels.append(label_ids)
 
-    predictions = [item for sublist in predictions for item in sublist]
-    true_labels = [item for sublist in true_labels for item in sublist]
-    return predictions, true_labels, total_loss, total_acc
+    predictions = [
+        np.argmax(prediction)
+        for batched_predictions in predictions
+        for prediction in batched_predictions
+    ]
+    true_labels = [label for batched_labels in true_labels for label in batched_labels]
+    return predictions, true_labels, total_loss
+
+
+def test_evaluation(dataloader: DataLoader) -> Tuple[List[np.int32], List[np.int32]]:
+    """
+    Evaluate the model using the provided dataloader.
+
+    Args:
+        dataloader (DataLoader): DataLoader object for test/validation data.
+
+    Returns:
+        Tuple[List[np.int32], List[np.int32]]: Predicted labels and true labels.
+    """
+    evaluation = evaluate(dataloader)
+    return evaluation[0], evaluation[1]
+
+
+def validation(dataloader: DataLoader) -> Tuple[List[np.int32], List[np.int32], int]:
+    """
+    Validate the model using the provided dataloader and record total loss.
+
+    Args:
+        dataloader (DataLoader): DataLoader object for validation data.
+
+    Returns:
+        Tuple[List[np.int32], List[np.int32], int]: Predicted labels, true labels, and total evaluation loss.
+    """
+    evaluation = evaluate(dataloader, record_total_loss=True)
+    return evaluation[0], evaluation[1], evaluation[2]
+
+
+def remove_span_tags(sample: str) -> str:
+    """
+    Remove <BOS> and <EOS> tags from the input sample.
+
+    Args:
+        sample (str): Input text sample.
+
+    Returns:
+        str: Text sample with <BOS> and <EOS> tags removed.
+    """
+    return sample.replace(BEGINNING_OF_SPAN, "").replace(END_OF_SPAN, "")
+
+
+def encode_dataset(df: pd.DataFrame) -> Tuple[any, any, any]:
+    """
+    Encode the dataset using the tokenizer.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing the dataset.
+
+    Returns:
+        Tuple[torch.Tensor, torch.Tensor, torch.Tensor]: Tuple containing input_ids, attention_mask, and labels.
+    """
+    encoded = tokenizer.batch_encode_plus(
+        df["tagged_in_context"],
+        add_special_tokens=True,
+        return_attention_mask=True,
+        padding=True,
+        truncation=True,
+        return_tensors="pt",
+    )
+    return (
+        encoded["input_ids"].to(torch.long),
+        encoded["attention_mask"].to(torch.long),
+        torch.tensor(df["label"].values, dtype=torch.long),
+    )
+
+
+def create_dataset_from_parts(
+    inputs: torch.Tensor,
+    masks: torch.Tensor,
+    labels: torch.Tensor,
+    sampler: Literal["random", "sequential"] = "random",
+) -> DataLoader:
+    """
+    Remove <BOS> and <EOS> tags from the input sample.
+
+    Args:
+        sample (str): Input text sample.
+
+    Returns:
+        str: Text sample with <BOS> and <EOS> tags removed.
+    """
+    dataset = TensorDataset(inputs, masks, labels)
+    return DataLoader(
+        dataset,
+        sampler=(
+            RandomSampler(dataset)
+            if sampler == "random"
+            else SequentialSampler(dataset)
+        ),
+        batch_size=BATCH_SIZE,
+    )
+
+
+def convert_to_binary_label(label: str) -> int:
+    """
+    Convert label to binary representation.
+
+    Args:
+        label (str): Input label.
+
+    Returns:
+        int: Binary representation of the label (1 for propaganda, 0 for not propaganda).
+    """
+    return 1 if label != "not_propaganda" else 0
 
 
 def create_datasets() -> Tuple[DataLoader, DataLoader, DataLoader]:
-    def remove_span_tags(sample: str) -> str:
-        return sample.replace(BEGINNING_OF_SPAN, "").replace(END_OF_SPAN, "")
+    """
+    Convert label to binary representation.
 
-    def encode_dataset(df: pd.DataFrame) -> Tuple[any, any, any]:
-        encoded = tokenizer.batch_encode_plus(
-            df["tagged_in_context"],
-            add_special_tokens=True,
-            return_attention_mask=True,
-            padding=True,
-            truncation=True,
-            return_tensors="pt",
-        )
-        return (
-            encoded["input_ids"],
-            encoded["attention_mask"],
-            torch.tensor(df["label"].values),
-        )
+    Args:
+        label (str): Input label.
 
-    def create_dataset_from_parts(
-        inputs: torch.Tensor,
-        masks: torch.Tensor,
-        labels: torch.Tensor,
-        sampler: Literal["random", "sequential"] = "random",
-    ) -> DataLoader:
-        dataset = TensorDataset(inputs, masks, labels)
-        return DataLoader(
-            dataset,
-            sampler=(
-                RandomSampler(dataset)
-                if sampler == "random"
-                else SequentialSampler(dataset)
-            ),
-            batch_size=BATCH_SIZE,
-        )
-
-    def convert_to_binary_label(label: str) -> int:
-        return 1 if label != "not_propaganda" else 0
-
+    Returns:
+        int: Binary representation of the label (1 for propaganda, 0 for not propaganda).
+    """
     train = pd.read_csv(
         f"{DATASET_PATH}/{TRAIN_DATASET}", sep="\t", header=0, quoting=3
     )
@@ -151,30 +272,69 @@ def create_datasets() -> Tuple[DataLoader, DataLoader, DataLoader]:
     return train_dataloader, validation_dataloader, test_dataloader
 
 
-def train(do_pretrain=False):
+def get_optimizer(optimizer_name: str) -> Optimizer:
+    """
+    Get an instance of the specified optimizer.
+
+    Args:
+        optimizer_name (str): The name of the optimizer class.
+
+    Returns:
+        torch.optim.Optimizer: An instance of the specified optimizer class.
+
+    Example:
+        optimizer = get_optimizer('Adam')
+    """
+    optimizer_cls = getattr(optim, optimizer_name)
+    return optimizer_cls(model.parameters(), lr=LR, weight_decay=DECAY)
+
+
+def plot_confusion_matrix(y_true, y_pred, labels):
+    """
+    Plot the confusion matrix and save it to disk
+
+    Args:
+        y_true (List): True labels.
+        y_pred (List): Predicted labels.
+        labels (List[str]): List of class labels.
+    """
+    plt.ioff()
+    cm = confusion_matrix(y_true, y_pred, labels=labels)
+    plt.figure(figsize=(10, 7))
+    sns.heatmap(
+        cm, annot=True, fmt="d", cmap="Blues", xticklabels=labels, yticklabels=labels
+    )
+    plt.xlabel("Predicted")
+    plt.ylabel("Actual")
+    plt.title("Confusion Matrix")
+    plt.savefig(
+        f"./models/{MODEL_NAME}-binary-propaganda-detection/classification_confusion_matrix.png"
+    )
+
+
+def train() -> dict:
+    """
+    Train the BERT model for binary propaganda detection.
+
+    Returns:
+        dict: Classification report including precision, recall, F1-score, and accuracy.
+    """
     train_dataloader, validation_dataloader, test_dataloader = create_datasets()
 
-    if do_pretrain:
-        print("Pre-training performance:")
-        test_predictions, test_labels, _, _ = evaluate(test_dataloader)
-        test_predictions = [np.argmax(pred) for pred in test_predictions]
-        print(classification_report(test_predictions, test_labels))
-
-    optimizer = AdamW(model.parameters(), lr=LR, weight_decay=DECAY)
+    optimizer = get_optimizer(OPTIMIZER)
 
     for epoch in range(EPOCHS):
         model.train()
         total_train_loss = 0
         train_iterator = tqdm(
-            train_dataloader, desc=f"Training Epoch {epoch + 1}/{EPOCHS}"
+            train_dataloader, desc=f"Training Epoch {epoch + 1:02}/{EPOCHS}"
         )
 
-        for batch in train_iterator:
-            batch = tuple(t.to(device) for t in batch)
+        for input_ids, attention_mask, labels in train_iterator:
             inputs = {
-                "input_ids": batch[0],
-                "attention_mask": batch[1],
-                "labels": batch[2],
+                "input_ids": input_ids.to(device),
+                "attention_mask": attention_mask.to(device),
+                "labels": labels.to(device),
             }
 
             optimizer.zero_grad()
@@ -188,36 +348,34 @@ def train(do_pretrain=False):
         avg_train_loss = total_train_loss / len(train_dataloader)
         wandb.log({"train": {"avg_loss": avg_train_loss}})
 
-        val_predictions, val_labels, total_eval_loss, total_eval_accuracy = evaluate(
-            validation_dataloader, validation=True
+        val_predictions, val_labels, total_val_loss = validation(validation_dataloader)
+        val_metrics = classification_report(
+            val_predictions, val_labels, target_names=LABELS, output_dict=True, zero_division=0.0
         )
-        avg_val_accuracy = total_eval_accuracy / len(validation_dataloader)
-        val_predictions = [np.argmax(pred) for pred in val_predictions]
-        metrics = classification_report(
-            val_predictions, val_labels, target_names=["0", "1"], output_dict=True
-        )
-        avg_val_loss = total_eval_loss / len(validation_dataloader)
-        wandb.log({"val": {"acc": avg_val_accuracy}})
-        wandb.log({"val": {"avg_loss": avg_val_loss}})
+        avg_val_loss = total_val_loss / len(validation_dataloader)
         wandb.log(
             {
                 "val": {
-                    "f1": metrics["weighted avg"]["f1-score"],
-                    "precision": metrics["weighted avg"]["precision"],
-                    "recall": metrics["weighted avg"]["recall"],
+                    "f1": val_metrics["weighted avg"]["f1-score"],
+                    "precision": val_metrics["weighted avg"]["precision"],
+                    "recall": val_metrics["weighted avg"]["recall"],
+                    "loss": avg_val_loss,
+                    "acc": val_metrics["accuracy"],
                 }
             }
         )
 
-    test_predictions, test_labels, _, _ = evaluate(test_dataloader)
-    test_predictions = [np.argmax(pred) for pred in test_predictions]
+    test_predictions, test_labels = test_evaluation(test_dataloader)
 
-    print(classification_report(test_labels, test_predictions))
-    metrics = classification_report(
-        test_labels, test_predictions, output_dict=True, target_names=["0", "1"]
+    test_predictions = [LABELS[label] for label in test_predictions]
+    test_labels = [LABELS[label] for label in test_labels]
+
+    test_metrics = classification_report(
+        test_labels, test_predictions, output_dict=True, target_names=LABELS
     )
     model.save_pretrained(f"./models/{MODEL_NAME}-binary-propaganda-detection")
-    return metrics
+    plot_confusion_matrix(test_labels, test_predictions, LABELS)
+    return test_metrics
 
 
 if __name__ == "__main__":
@@ -232,12 +390,22 @@ if __name__ == "__main__":
         "batch_size": BATCH_SIZE,
         "dropout_rate": DROPOUT_RATE,
         "decay_rate": DECAY,
+        "optimizer": OPTIMIZER,
     }
     wandb.watch(model)
     test_metrics = train()
-    wandb.log_artifact(f"./models/{MODEL_NAME}-binary-propaganda-detection")
     wandb.run.summary["test_accuracy"] = test_metrics["accuracy"]
     wandb.run.summary["test_precision"] = test_metrics["weighted avg"]["precision"]
     wandb.run.summary["test_recall"] = test_metrics["weighted avg"]["recall"]
     wandb.run.summary["test_f1"] = test_metrics["weighted avg"]["f1-score"]
+    wandb.log(
+        {
+            "test": {
+                "accuracy": test_metrics["accuracy"],
+                "precision": test_metrics["weighted avg"]["precision"],
+                "recall": test_metrics["weighted avg"]["recall"],
+                "f1": test_metrics["weighted avg"]["f1-score"],
+            }
+        }
+    )
     wandb.finish()
