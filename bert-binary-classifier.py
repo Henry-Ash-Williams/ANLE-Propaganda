@@ -24,7 +24,7 @@ argparser.add_argument("--learning_rate", type=float, default=2e-5)
 argparser.add_argument("--batch_size", type=int, default=32)
 argparser.add_argument("--dropout_rate", type=float, default=0.1)
 argparser.add_argument("--weight_decay", type=float, default=0.01)
-argparser.add_argument("--epochs", type=int, default=1)
+argparser.add_argument("--epochs", type=int, default=10)
 argparser.add_argument("--optimizer", type=str, default="AdamW")
 
 args = argparser.parse_args()

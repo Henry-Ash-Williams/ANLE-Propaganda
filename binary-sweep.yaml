@@ -1,6 +1,6 @@
-name: "bert-propaganda-classifier-sweep"
-program: "bert-propaganda-classifier.py"
-method: bayesian 
+name: "bert-binary-classifier-sweep"
+program: "bert-binary-classifier.py"
+method: bayes
 metric: 
   goal: "maximize"
   name: "test.f1"
@@ -18,3 +18,8 @@ parameters:
     max: 0.01
   optimizer: 
     values: ['AdamW', 'RMSprop', 'SGD']
+command:
+  - ${env}
+  - "/Users/henrywilliams/Documents/uni/anle/assessment/.venv/bin/python"
+  - ${program}
+  - ${args}

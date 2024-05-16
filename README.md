@@ -32,7 +32,9 @@ python bert-binary-classifier.py
 
 Hyperparameter sweeps allow us to find the best possible hyperparameter values for our model. To perform one of these sweeps, run the following commands. This will perform the sweep on the multi-class propaganda classifier, as I have not implemented the necessary behaviour for a sweep on the binary classifier. 
 
+Before running a hyperparameter sweep, make sure to update either `binary-sweep.yaml`, or `classifier-sweep.yaml` depending on which model the hyperparameter sweep is operating on. 
+
 ```sh
-wandb sweep sweep.yaml 
+wandb sweep {binary,classifier}-sweep.yaml 
 wandb agent <SWEEP_ID>
 ```
