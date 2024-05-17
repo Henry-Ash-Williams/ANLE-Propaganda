@@ -8,3 +8,21 @@
 /other-work
 
 /models
+
+*-blx.bib
+*.aux 
+*.log 
+*.run.xml
+*.synctex.gz 
+*.toc 
+*.out 
+
+/tex/interim-examples
+*.synctex(busy)
+
+*.bbl
+
+*.blg
+
+*.bcf
+

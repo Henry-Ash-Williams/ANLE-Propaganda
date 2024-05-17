@@ -40,12 +40,14 @@ END_OF_SPAN = "<EOS>"
 
 MODEL_NAME = "bert-base-uncased"
 
-LR = args.learning_rate
-BATCH_SIZE = args.batch_size
-DROPOUT_RATE = args.dropout_rate
-DECAY = args.weight_decay
-EPOCHS = args.epochs
-OPTIMIZER = args.optimizer
+DEBUG = True
+
+LR = args.learning_rate if not DEBUG else 0.01057728415157835
+BATCH_SIZE = args.batch_size if not DEBUG else 16
+DROPOUT_RATE = args.dropout_rate if not DEBUG else 0.18604433133268403
+DECAY = args.weight_decay if not DEBUG else 0.01057728415157835
+EPOCHS = args.epochs 
+OPTIMIZER = args.optimizer if not DEBUG else "SGD"
 
 LABELS = [
     "not_propaganda",
