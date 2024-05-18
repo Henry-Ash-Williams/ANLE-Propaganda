@@ -20,12 +20,12 @@ warnings.simplefilter(action="ignore", category=FutureWarning)
 
 argparser = argparse.ArgumentParser()
 
-argparser.add_argument("--learning_rate", type=float, default=2e-5)
+argparser.add_argument("--learning_rate", type=float, default=0.01057728415157835)
 argparser.add_argument("--batch_size", type=int, default=32)
-argparser.add_argument("--dropout_rate", type=float, default=0.1)
-argparser.add_argument("--weight_decay", type=float, default=0.01)
+argparser.add_argument("--dropout_rate", type=float, default=0.18604433133268403)
+argparser.add_argument("--weight_decay", type=float, default=0.01057728415157835)
 argparser.add_argument("--epochs", type=int, default=10)
-argparser.add_argument("--optimizer", type=str, default="AdamW")
+argparser.add_argument("--optimizer", type=str, default="SGD")
 
 args = argparser.parse_args()
 
@@ -40,14 +40,12 @@ END_OF_SPAN = "<EOS>"
 
 MODEL_NAME = "bert-base-uncased"
 
-DEBUG = True
-
-LR = args.learning_rate if not DEBUG else 0.01057728415157835
-BATCH_SIZE = args.batch_size if not DEBUG else 16
-DROPOUT_RATE = args.dropout_rate if not DEBUG else 0.18604433133268403
-DECAY = args.weight_decay if not DEBUG else 0.01057728415157835
+LR = args.learning_rate 
+BATCH_SIZE = args.batch_size 
+DROPOUT_RATE = args.dropout_rate 
+DECAY = args.weight_decay 
 EPOCHS = args.epochs 
-OPTIMIZER = args.optimizer if not DEBUG else "SGD"
+OPTIMIZER = args.optimizer 
 
 LABELS = [
     "not_propaganda",
@@ -384,7 +382,7 @@ if __name__ == "__main__":
     wandb.login()
     wandb.init(
         project="propaganda-detection",
-        notes="Binary propaganda classification with bert, including weight decay and dropout rate",
+        notes="Baseline BERT Binary propaganda detection",
     )
     wandb.config = {
         "epochs": EPOCHS,

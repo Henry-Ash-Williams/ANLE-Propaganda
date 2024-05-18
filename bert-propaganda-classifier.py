@@ -40,14 +40,14 @@ BEGINNING_OF_SPAN = "<BOS>"
 END_OF_SPAN = "<EOS>"
 
 LABELS = [
-    "repetition",
-    "doubt",
-    "name_calling,labeling",
-    "flag_waving",
-    "exaggeration,minimisation",
-    "appeal_to_fear_prejudice",
-    "loaded_language",
-    "causal_oversimplification",
+"flag_waving",
+"appeal_to_fear_prejudice",
+"causal_simplification",
+"doubt",
+"exaggeration,minimisation",
+"loaded_language",
+"name_calling,labeling",
+"repetition",
 ]
 
 
@@ -291,7 +291,7 @@ def plot_confusion_matrix(y_true, y_pred, labels):
     """
     plt.ioff()
     cm = confusion_matrix(y_true, y_pred, labels=labels)
-    plt.figure(figsize=(10, 7))
+    plt.figure()
     sns.heatmap(
         cm, annot=True, fmt="d", cmap="Blues", xticklabels=labels, yticklabels=labels
     )
@@ -330,45 +330,45 @@ def train():
 
     model.train()
 
-    for epoch in range(EPOCHS):
-        total_training_loss = 0
-        train_iterator = tqdm(train, desc=f"Training Epoch {epoch + 1:02}/{EPOCHS}")
+    # for epoch in range(EPOCHS):
+    #     total_training_loss = 0
+    #     train_iterator = tqdm(train, desc=f"Training Epoch {epoch + 1:02}/{EPOCHS}")
 
-        for input_ids, attention_mask, labels in train_iterator:
-            inputs = {
-                "input_ids": input_ids.to(device),
-                "attention_mask": attention_mask.to(device),
-                "labels": labels.to(device),
-            }
+    #     for input_ids, attention_mask, labels in train_iterator:
+    #         inputs = {
+    #             "input_ids": input_ids.to(device),
+    #             "attention_mask": attention_mask.to(device),
+    #             "labels": labels.to(device),
+    #         }
 
-            optimizer.zero_grad()
-            outputs = model(**inputs)
-            loss = outputs.loss
-            total_training_loss += loss.item()
-            loss.backward()
-            optimizer.step()
-            wandb.log({"loss": loss.item()})
-        wandb.log({"avg_loss": total_training_loss / len(train)})
-        val_predictions, val_labels, total_val_loss = validation(val)
-        val_metrics = classification_report(
-            val_labels,
-            val_predictions,
-            output_dict=True,
-            target_names=LABELS,
-            zero_division=0.0,
-        )
-        avg_val_loss = total_val_loss / len(val)
-        wandb.log(
-            {
-                "val": {
-                    "acc": val_metrics["accuracy"],
-                    "loss": avg_val_loss,
-                    "precision": val_metrics["weighted avg"]["precision"],
-                    "recall": val_metrics["weighted avg"]["recall"],
-                    "f1-score": val_metrics["weighted avg"]["f1-score"],
-                }
-            }
-        )
+    #         optimizer.zero_grad()
+    #         outputs = model(**inputs)
+    #         loss = outputs.loss
+    #         total_training_loss += loss.item()
+    #         loss.backward()
+    #         optimizer.step()
+    #         wandb.log({"loss": loss.item()})
+    #     wandb.log({"avg_loss": total_training_loss / len(train)})
+    #     val_predictions, val_labels, total_val_loss = validation(val)
+    #     val_metrics = classification_report(
+    #         val_labels,
+    #         val_predictions,
+    #         output_dict=True,
+    #         target_names=LABELS,
+    #         zero_division=0.0,
+    #     )
+    #     avg_val_loss = total_val_loss / len(val)
+    #     wandb.log(
+    #         {
+    #             "val": {
+    #                 "acc": val_metrics["accuracy"],
+    #                 "loss": avg_val_loss,
+    #                 "precision": val_metrics["weighted avg"]["precision"],
+    #                 "recall": val_metrics["weighted avg"]["recall"],
+    #                 "f1-score": val_metrics["weighted avg"]["f1-score"],
+    #             }
+    #         }
+    #     )
 
     test_predictions, test_labels = test_evaluation(test)
     test_metrics = classification_report(
@@ -403,7 +403,7 @@ def train():
 if __name__ == "__main__":
     wandb.login()
     wandb.init(
-        project="propaganda-detection", notes="Propaganda classification with BERT"
+        project="propaganda-detection", notes="Baseline propaganda classification with BERT"
     )
     wandb.config = {
         "epochs": EPOCHS,

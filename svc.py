@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.svm import SVC
@@ -35,13 +36,52 @@ vectorizer = TfidfVectorizer(stop_words="english")
 X_train_vec = vectorizer.fit_transform(X_train)
 X_test_vec = vectorizer.transform(X_test)
 
-for kernel in ["linear", "poly", "rbf", "sigmoid"]:
-    print(f"using kernel: {kernel}")
-    svm = SVC(kernel=kernel)
-    svm.fit(X_train_vec, y_train)
+overall_metrics = {
+    'linear': {
+        'precision': [],
+        'recall': [],    
+        'f1': [],
+        'acc': []
+    },
+    'poly': {
+        'precision': [],
+        'recall': [],    
+        'f1': [],
+        'acc': []
+    },
+    'rbf': {
+        'precision': [],
+        'recall': [],    
+        'f1': [],
+        'acc': []
+    },
+    'sigmoid': {
+        'precision': [],
+        'recall': [],    
+        'f1': [],
+        'acc': []
+    },
+}
 
-    y_pred = svm.predict(X_test_vec)
+for i in range(10):
+    for kernel in ["linear", "poly", "rbf", "sigmoid"]:
+        svm = SVC(kernel=kernel)
+        svm.fit(X_train_vec, y_train)
 
-    accuracy = accuracy_score(y_test, y_pred)
-    print("Accuracy:", accuracy)
-    # print("Classification Report:\n", classification_report(y_test, y_pred))
+        y_pred = svm.predict(X_test_vec)
+
+        # accuracy = accuracy_score(y_test, y_pred)
+        # print("Accuracy:", accuracy)
+        this_metrics = classification_report(y_test, y_pred, output_dict=True)
+        overall_metrics[kernel]['precision'].append(this_metrics['weighted avg']['precision'])
+        overall_metrics[kernel]['recall'].append(this_metrics['weighted avg']['recall'])
+        overall_metrics[kernel]['f1'].append(this_metrics['weighted avg']['f1-score'])
+        overall_metrics[kernel]['acc'].append(this_metrics['accuracy'])
+
+
+for kernel, metrics in overall_metrics.items():
+    print(f"====={kernel}===== ")
+    print(f"Precision:\t{np.round( np.mean(metrics['precision']), decimals=2 )}")
+    print(f"Recall:\t\t{np.round(np.mean(metrics['recall']), decimals=2)}")
+    print(f"F1:\t\t{np.round(np.mean(metrics['f1']), decimals=2)}")
+    print(f"Acc:\t\t{np.round(np.mean(metrics['acc']), decimals=2)}")
