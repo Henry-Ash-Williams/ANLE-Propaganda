@@ -22,6 +22,29 @@
   abstract  = {We present the results and the main findings of SemEval-2020 Task 11 on Detection of Propaganda Techniques in News Articles. The task featured two subtasks. Subtask SI is about Span Identification: given a plain-text document, spot the specific text fragments containing propaganda. Subtask TC is about Technique Classification: given a specific text fragment, in the context of a full document, determine the propaganda technique it uses, choosing from an inventory of 14 possible propaganda techniques. The task attracted a large number of participants: 250 teams signed up to participate and 44 made a submission on the test set. In this paper, we present the task, analyze the results, and discuss the system submissions and the methods they used. For both subtasks, the best systems used pre-trained Transformers and ensembles.}
 }
 
+@inproceedings{dadgar2016novel,
+  author    = {Dadgar, Seyyed Mohammad Hossein and Araghi, Mohammad Shirzad and Farahani, Morteza Mastery},
+  booktitle = {2016 IEEE International Conference on Engineering and Technology (ICETECH)},
+  title     = {A novel text mining approach based on TF-IDF and Support Vector Machine for news classification},
+  year      = {2016},
+  volume    = {},
+  number    = {},
+  pages     = {112-116},
+  keywords  = {Support vector machines;Classification algorithms;Text categorization;Algorithm design and analysis;Computers;Text mining;Software algorithms;Preprocessing;Feature Extraction;TF-IDF;Support Vector Machine;Dataset},
+  doi       = {10.1109/ICETECH.2016.7569223}
+}
+
+@article{hobbs2014teaching,
+  author  = {Hobbs, Renee},
+  year    = {2014},
+  month   = {11},
+  pages   = {56-67},
+  title   = {Teaching about Propaganda: An Examination of the Historical Roots of Media Literacy},
+  volume  = {6},
+  journal = {Journal of Media Literacy Education},
+  doi     = {10.23860/JMLE-2016-06-02-5}
+}
+
 @article{martino2020survey,
   author     = {Giovanni Da San Martino and
                 Stefano Cresci and
@@ -41,6 +64,35 @@
   bibsource  = {dblp computer science bibliography, https://dblp.org}
 }
 
+@inproceedings{papineni2002bleu,
+  title     = {{B}leu: a Method for Automatic Evaluation of Machine Translation},
+  author    = {Papineni, Kishore  and
+               Roukos, Salim  and
+               Ward, Todd  and
+               Zhu, Wei-Jing},
+  editor    = {Isabelle, Pierre  and
+               Charniak, Eugene  and
+               Lin, Dekang},
+  booktitle = {Proceedings of the 40th Annual Meeting of the Association for Computational Linguistics},
+  month     = jul,
+  year      = {2002},
+  address   = {Philadelphia, Pennsylvania, USA},
+  publisher = {Association for Computational Linguistics},
+  url       = {https://aclanthology.org/P02-1040},
+  doi       = {10.3115/1073083.1073135},
+  pages     = {311--318}
+}
+@inproceedings{qader2019overview,
+  author    = {Qader, Wisam A. and Ameen, Musa M. and Ahmed, Bilal I.},
+  booktitle = {2019 International Engineering Conference (IEC)},
+  title     = {An Overview of Bag of Words;Importance, Implementation, Applications, and Challenges},
+  year      = {2019},
+  volume    = {},
+  number    = {},
+  pages     = {200-204},
+  keywords  = {Bag of Words;Image Classification;Text Classification;Visual Scene Classification},
+  doi       = {10.1109/IEC47844.2019.8950616}
+}
 @book{scott1994power,
   title     = {Power: Critical Concepts},
   author    = {Scott, J.},
@@ -49,6 +101,31 @@
   url       = {https://books.google.co.uk/books?id=JhOgKaxOIYIC},
   year      = {1994},
   publisher = {Routledge}
+}
+
+@incollection{suthaharan2015chapter7,
+  author        = {Shan Suthaharan},
+  title         = {Chapter 7: Support Vector Machine},
+  booktitle     = {Machine Learning Models and Algorithms for Big Data Classification: Thinking with Examples for Effective Learning},
+  series        = {Integrated Series in Information Systems},
+  volume        = {36},
+  year          = {2015},
+  publisher     = {Springer New York},
+  address       = {New York, NY},
+  chapter       = {7},
+  pages         = {207-235},
+  isbn          = {978-1-4899-7640-6},
+  isbn          = {978-1-4899-7852-3},
+  isbn          = {978-1-4899-7641-3},
+  doi           = {10.1007/978-1-4899-7641-3},
+  url           = {https://doi.org/10.1007/978-1-4899-7641-3},
+  series_issn   = {1571-0270},
+  series_eissn  = {2197-7968},
+  edition       = {1},
+  note          = {Published: 21 October 2015, 23 August 2016, 20 October 2015},
+  keywords      = {Management, Database Management, Artificial Intelligence},
+  illustrations = {67 b/w illustrations, 82 illustrations in colour},
+  copyright     = {Springer Science+Business Media New York 2016}
 }
 
 @article{tannenbaum2015appeal,
@@ -94,6 +171,7 @@
   language = {en}
 }
 
+
 @inproceedings{yoosuf2019fine,
   title     = {Fine-Grained Propaganda Detection with Fine-Tuned {BERT}},
   author    = {Yoosuf, Shehel  and
@@ -114,13 +192,37 @@
   pages     = {87--91},
   abstract  = {This paper presents the winning solution of the Fragment Level Classification (FLC) task in the Fine Grained Propaganda Detection competition at the NLP4IF{'}19 workshop. The goal of the FLC task is to detect and classify textual segments that correspond to one of the 18 given propaganda techniques in a news articles dataset. The main idea of our solution is to perform word-level classification using fine-tuned BERT, a popular pre-trained language model. Besides presenting the model and its evaluation results, we also investigate the attention heads in the model, which provide insights into what the model learns, as well as aspects for potential improvements.}
 }
-@article{hobbs2014teaching,
-author = {Hobbs, Renee},
-year = {2014},
-month = {11},
-pages = {56-67},
-title = {Teaching about Propaganda: An Examination of the Historical Roots of Media Literacy},
-volume = {6},
-journal = {Journal of Media Literacy Education},
-doi = {10.23860/JMLE-2016-06-02-5}
+@article{devlin2018bert,
+  author       = {Jacob Devlin and
+                  Ming{-}Wei Chang and
+                  Kenton Lee and
+                  Kristina Toutanova},
+  title        = {{BERT:} Pre-training of Deep Bidirectional Transformers for Language
+                  Understanding},
+  journal      = {CoRR},
+  volume       = {abs/1810.04805},
+  year         = {2018},
+  url          = {http://arxiv.org/abs/1810.04805},
+  eprinttype    = {arXiv},
+  eprint       = {1810.04805},
+  timestamp    = {Tue, 30 Oct 2018 20:39:56 +0100},
+  biburl       = {https://dblp.org/rec/journals/corr/abs-1810-04805.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org}
+}
+
+@Article{victoria2021automatic,
+author={Victoria, A. Helen
+and Maragatham, G.},
+title={Automatic tuning of hyperparameters using Bayesian optimization},
+journal={Evolving Systems},
+year={2021},
+month={Mar},
+day={01},
+volume={12},
+number={1},
+pages={217-223},
+abstract={Deep learning is a field in artificial intelligence that works well in computer vision, natural language processing and audio recognition. Deep neural network architectures has number of layers to conceive the features well, by itself. The hyperparameter tuning plays a major role in every dataset which has major effect in the performance of the training model. Due to the large dimensionality of data it is impossible to tune the parameters by human expertise. In this paper, we have used the CIFAR-10 Dataset and applied the Bayesian hyperparameter optimization algorithm to enhance the performance of the model. Bayesian optimization can be used for any noisy black box function for hyperparameter tuning. In this work Bayesian optimization clearly obtains optimized values for all hyperparameters which saves time and improves performance. The results also show that the error has been reduced in graphical processing unit than in CPU by 6.2{\%} in the validation. Achieving global optimization in the trained model helps transfer learning across domains as well.},
+issn={1868-6486},
+doi={10.1007/s12530-020-09345-2},
+url={https://doi.org/10.1007/s12530-020-09345-2}
 }

@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import time
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.svm import SVC
@@ -10,9 +11,7 @@ def remove_span_tags(sample: str):
     return sample.replace(BEGINNING_OF_SPAN, "").replace(END_OF_SPAN, "")
 
 
-DATASET_PATH = (
-    "../propaganda_dataset_v2"
-)
+DATASET_PATH = "propaganda_dataset_v2"
 TRAIN_DATASET = "propaganda_train.tsv"
 VAL_DATASET = "propaganda_val.tsv"
 
@@ -37,46 +36,30 @@ X_train_vec = vectorizer.fit_transform(X_train)
 X_test_vec = vectorizer.transform(X_test)
 
 overall_metrics = {
-    'linear': {
-        'precision': [],
-        'recall': [],    
-        'f1': [],
-        'acc': []
-    },
-    'poly': {
-        'precision': [],
-        'recall': [],    
-        'f1': [],
-        'acc': []
-    },
-    'rbf': {
-        'precision': [],
-        'recall': [],    
-        'f1': [],
-        'acc': []
-    },
-    'sigmoid': {
-        'precision': [],
-        'recall': [],    
-        'f1': [],
-        'acc': []
-    },
+    "linear": {"precision": [], "recall": [], "f1": [], "acc": []},
+    "poly": {"precision": [], "recall": [], "f1": [], "acc": []},
+    "rbf": {"precision": [], "recall": [], "f1": [], "acc": []},
+    "sigmoid": {"precision": [], "recall": [], "f1": [], "acc": []},
 }
 
-for i in range(10):
-    for kernel in ["linear", "poly", "rbf", "sigmoid"]:
-        svm = SVC(kernel=kernel)
-        svm.fit(X_train_vec, y_train)
+# for i in range(10):
+# for kernel in ["linear", "poly", "rbf", "sigmoid"]:
+svm = SVC(kernel="linear")
+fit_start = time.time()
+svm.fit(X_train_vec, y_train)
+print(f"Fitting took {time.time() - fit_start}")
 
-        y_pred = svm.predict(X_test_vec)
+infer_start = time.time()
+y_pred = svm.predict(X_test_vec)
+print(f"Took {time.time() - infer_start} to make {len(y_pred)}")
 
-        # accuracy = accuracy_score(y_test, y_pred)
-        # print("Accuracy:", accuracy)
-        this_metrics = classification_report(y_test, y_pred, output_dict=True)
-        overall_metrics[kernel]['precision'].append(this_metrics['weighted avg']['precision'])
-        overall_metrics[kernel]['recall'].append(this_metrics['weighted avg']['recall'])
-        overall_metrics[kernel]['f1'].append(this_metrics['weighted avg']['f1-score'])
-        overall_metrics[kernel]['acc'].append(this_metrics['accuracy'])
+# accuracy = accuracy_score(y_test, y_pred)
+# print("Accuracy:", accuracy)
+this_metrics = classification_report(y_test, y_pred, output_dict=True)
+# overall_metrics[kernel]['precision'].append(this_metrics['weighted avg']['precision'])
+# overall_metrics[kernel]['recall'].append(this_metrics['weighted avg']['recall'])
+# overall_metrics[kernel]['f1'].append(this_metrics['weighted avg']['f1-score'])
+# overall_metrics[kernel]['acc'].append(this_metrics['accuracy'])
 
 
 for kernel, metrics in overall_metrics.items():

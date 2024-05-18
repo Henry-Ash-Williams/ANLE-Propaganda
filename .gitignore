@@ -26,3 +26,6 @@
 
 *.bcf
 
+/.vscode
+/.gitattributes
+*.pdf

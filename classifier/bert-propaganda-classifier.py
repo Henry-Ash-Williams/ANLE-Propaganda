@@ -40,14 +40,14 @@ BEGINNING_OF_SPAN = "<BOS>"
 END_OF_SPAN = "<EOS>"
 
 LABELS = [
-"flag_waving",
-"appeal_to_fear_prejudice",
-"causal_simplification",
-"doubt",
-"exaggeration,minimisation",
-"loaded_language",
-"name_calling,labeling",
-"repetition",
+    "flag_waving",
+    "appeal_to_fear_prejudice",
+    "causal_simplification",
+    "doubt",
+    "exaggeration,minimisation",
+    "loaded_language",
+    "name_calling,labeling",
+    "repetition",
 ]
 
 
@@ -403,7 +403,8 @@ def train():
 if __name__ == "__main__":
     wandb.login()
     wandb.init(
-        project="propaganda-detection", notes="Baseline propaganda classification with BERT"
+        project="propaganda-detection",
+        notes="Baseline propaganda classification with BERT",
     )
     wandb.config = {
         "epochs": EPOCHS,

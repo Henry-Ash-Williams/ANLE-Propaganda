@@ -29,9 +29,7 @@ argparser.add_argument("--optimizer", type=str, default="SGD")
 
 args = argparser.parse_args()
 
-DATASET_PATH = (
-    "../propaganda_dataset_v2/"
-)
+DATASET_PATH = "propaganda_dataset_v2/"
 TRAIN_DATASET = "propaganda_train.tsv"
 VAL_DATASET = "propaganda_val.tsv"
 
@@ -40,12 +38,12 @@ END_OF_SPAN = "<EOS>"
 
 MODEL_NAME = "bert-base-uncased"
 
-LR = args.learning_rate 
-BATCH_SIZE = args.batch_size 
-DROPOUT_RATE = args.dropout_rate 
-DECAY = args.weight_decay 
-EPOCHS = args.epochs 
-OPTIMIZER = args.optimizer 
+LR = args.learning_rate
+BATCH_SIZE = args.batch_size
+DROPOUT_RATE = args.dropout_rate
+DECAY = args.weight_decay
+EPOCHS = args.epochs
+OPTIMIZER = args.optimizer
 
 LABELS = [
     "not_propaganda",
