@@ -32,7 +32,7 @@ args = argparser.parse_args()
 
 GENERATE_CONFUSION_MATRIX = True
 
-DATASET_PATH = "./propaganda_dataset_v2"
+DATASET_PATH = "../propaganda_dataset_v2"
 TRAIN_DATASET = "propaganda_train.tsv"
 VAL_DATASET = "propaganda_val.tsv"
 

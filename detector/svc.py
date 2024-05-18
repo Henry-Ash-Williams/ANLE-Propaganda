@@ -11,7 +11,7 @@ def remove_span_tags(sample: str):
 
 
 DATASET_PATH = (
-    "/Users/henrywilliams/Documents/uni/anle/assessment/propaganda_dataset_v2"
+    "../propaganda_dataset_v2"
 )
 TRAIN_DATASET = "propaganda_train.tsv"
 VAL_DATASET = "propaganda_val.tsv"
