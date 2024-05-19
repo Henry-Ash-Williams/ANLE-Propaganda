@@ -290,9 +290,14 @@ Classification of propaganda was far more difficult, and I was only able to achi
 
 Future work could consider the impact of using state-of-the-art language models, such as OpenAI's GPT V4. However, as the model is currently a closed source, fine-tuning this model is impossible, and the sheer number of parameters in the model itself would likely make training very difficult. Other models such as Llama, or Mixtral could be tested instead as they are available for download, but they still require expensive hardware to fine-tune as they both have a very high number of parameters. 
 
-The \LaTeX~source code for this document, along with all the code used to test this model are publicly available on my \href{https://github.com/Henry-Ash-Williams/ANLE-Propaganda}{Github} page. This includes data relating to the training runs performed as part of hyperparameter optimization.
-
 
 \printbibliography
+
+\appendix
+
+\section*{Source Code}
+
+The \LaTeX~markdown used to generate this document, along with all of the source code used to train and evaluate these models are available on a public \href{https://github.com/Henry-Ash-Williams/ANLE-Propaganda}{GitHub repository}. I have also included the propaganda dataset in this repository, along with data about all of the training runs I performed as part of the development of my models. This data was provided by \href{https://wandb.ai/}{Weights \& Biases}. 
+
 
 \end{document}
