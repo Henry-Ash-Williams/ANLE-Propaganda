@@ -13,8 +13,8 @@ from torch.utils.data import TensorDataset, DataLoader, RandomSampler, Sequentia
 from transformers import BertTokenizer, BertForSequenceClassification, BertConfig
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split
-import wandb
 from tqdm import tqdm
+import wandb
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
@@ -348,7 +348,11 @@ def train() -> dict:
 
         val_predictions, val_labels, total_val_loss = validation(validation_dataloader)
         val_metrics = classification_report(
-            val_predictions, val_labels, target_names=LABELS, output_dict=True, zero_division=0.0
+            val_predictions,
+            val_labels,
+            target_names=LABELS,
+            output_dict=True,
+            zero_division=0.0,
         )
         avg_val_loss = total_val_loss / len(validation_dataloader)
         wandb.log(

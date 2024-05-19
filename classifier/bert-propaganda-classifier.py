@@ -146,7 +146,8 @@ def test_evaluation(dataloader: DataLoader) -> Tuple[List[np.int32], List[np.int
         dataloader (DataLoader): DataLoader object for test/validation data.
 
     Returns:
-        Tuple[List[np.int32], List[np.int32]]: Predicted labels and true labels.
+        Tuple[List[np.int32], List[np.int32]]:
+            Predicted labels and true labels.
     """
     evaluation = evaluate(dataloader)
     return evaluation[0], evaluation[1]
@@ -160,7 +161,8 @@ def validation(dataloader: DataLoader) -> Tuple[List[np.int32], List[np.int32], 
         dataloader (DataLoader): DataLoader object for validation data.
 
     Returns:
-        Tuple[List[np.int32], List[np.int32], int]: Predicted labels, true labels, and total evaluation loss.
+        Tuple[List[np.int32], List[np.int32], int]:
+            Predicted labels, true labels, and total evaluation loss.
     """
     evaluation = evaluate(dataloader, record_total_loss=True)
     return evaluation[0], evaluation[1], evaluation[2]
@@ -205,7 +207,8 @@ def encode_dataset(df: pd.DataFrame) -> Tuple[any, any, any]:
         df (pd.DataFrame): DataFrame containing the dataset.
 
     Returns:
-        Tuple[torch.Tensor, torch.Tensor, torch.Tensor]: Tuple containing input_ids, attention_mask, and labels.
+        Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+            Tuple containing input_ids, attention_mask, and labels.
     """
     encoded = tokenizer.batch_encode_plus(
         df["tagged_in_context"],
@@ -247,8 +250,8 @@ def create_datasets() -> Tuple[DataLoader, DataLoader, DataLoader]:
     Prepare training, validation, and test datasets.
 
     Returns:
-        Tuple[DataLoader, DataLoader, DataLoader]: Tuple containing training,
-        testing, and validation dataloaders.
+        Tuple[DataLoader, DataLoader, DataLoader]:
+            Tuple containing training, testing, and validation dataloaders.
     """
     train = pd.read_csv(
         f"{DATASET_PATH}/{TRAIN_DATASET}", sep="\t", quoting=3, header=0
@@ -299,7 +302,7 @@ def plot_confusion_matrix(y_true, y_pred, labels):
     plt.ylabel("Actual")
     plt.title("Confusion Matrix")
     plt.savefig(
-        f"./models/{MODEL_NAME}-propaganda-detection/classification_confusion_matrix.png"
+        f"./models/{MODEL_NAME}-propaganda-classification/classification_confusion_matrix.png"
     )
 
 
@@ -330,45 +333,45 @@ def train():
 
     model.train()
 
-    # for epoch in range(EPOCHS):
-    #     total_training_loss = 0
-    #     train_iterator = tqdm(train, desc=f"Training Epoch {epoch + 1:02}/{EPOCHS}")
+    for epoch in range(EPOCHS):
+        total_training_loss = 0
+        train_iterator = tqdm(train, desc=f"Training Epoch {epoch + 1:02}/{EPOCHS}")
 
-    #     for input_ids, attention_mask, labels in train_iterator:
-    #         inputs = {
-    #             "input_ids": input_ids.to(device),
-    #             "attention_mask": attention_mask.to(device),
-    #             "labels": labels.to(device),
-    #         }
+        for input_ids, attention_mask, labels in train_iterator:
+            inputs = {
+                "input_ids": input_ids.to(device),
+                "attention_mask": attention_mask.to(device),
+                "labels": labels.to(device),
+            }
 
-    #         optimizer.zero_grad()
-    #         outputs = model(**inputs)
-    #         loss = outputs.loss
-    #         total_training_loss += loss.item()
-    #         loss.backward()
-    #         optimizer.step()
-    #         wandb.log({"loss": loss.item()})
-    #     wandb.log({"avg_loss": total_training_loss / len(train)})
-    #     val_predictions, val_labels, total_val_loss = validation(val)
-    #     val_metrics = classification_report(
-    #         val_labels,
-    #         val_predictions,
-    #         output_dict=True,
-    #         target_names=LABELS,
-    #         zero_division=0.0,
-    #     )
-    #     avg_val_loss = total_val_loss / len(val)
-    #     wandb.log(
-    #         {
-    #             "val": {
-    #                 "acc": val_metrics["accuracy"],
-    #                 "loss": avg_val_loss,
-    #                 "precision": val_metrics["weighted avg"]["precision"],
-    #                 "recall": val_metrics["weighted avg"]["recall"],
-    #                 "f1-score": val_metrics["weighted avg"]["f1-score"],
-    #             }
-    #         }
-    #     )
+            optimizer.zero_grad()
+            outputs = model(**inputs)
+            loss = outputs.loss
+            total_training_loss += loss.item()
+            loss.backward()
+            optimizer.step()
+            wandb.log({"loss": loss.item()})
+        wandb.log({"avg_loss": total_training_loss / len(train)})
+        val_predictions, val_labels, total_val_loss = validation(val)
+        val_metrics = classification_report(
+            val_labels,
+            val_predictions,
+            output_dict=True,
+            target_names=LABELS,
+            zero_division=0.0,
+        )
+        avg_val_loss = total_val_loss / len(val)
+        wandb.log(
+            {
+                "val": {
+                    "acc": val_metrics["accuracy"],
+                    "loss": avg_val_loss,
+                    "precision": val_metrics["weighted avg"]["precision"],
+                    "recall": val_metrics["weighted avg"]["recall"],
+                    "f1-score": val_metrics["weighted avg"]["f1-score"],
+                }
+            }
+        )
 
     test_predictions, test_labels = test_evaluation(test)
     test_metrics = classification_report(
@@ -378,7 +381,7 @@ def train():
         target_names=LABELS,
         zero_division=0.0,
     )
-    model.save_pretrained(f"./models/{MODEL_NAME}-propaganda-detection")
+    model.save_pretrained(f"./models/{MODEL_NAME}-propaganda-classification")
 
     if GENERATE_CONFUSION_MATRIX:
         test_labels = [
@@ -392,7 +395,7 @@ def train():
         wandb.log(
             {
                 "classification_confusion_matrix": wandb.Image(
-                    f"./models/{MODEL_NAME}-propaganda-detection/classification_confusion_matrix.png"
+                    f"models/{MODEL_NAME}-propaganda-classification/classification_confusion_matrix.png"
                 )
             }
         )
@@ -403,7 +406,7 @@ def train():
 if __name__ == "__main__":
     wandb.login()
     wandb.init(
-        project="propaganda-detection",
+        project="propaganda-classification",
         notes="Baseline propaganda classification with BERT",
     )
     wandb.config = {

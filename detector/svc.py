@@ -1,13 +1,22 @@
+import time
+
 import pandas as pd
 import numpy as np
-import time
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.svm import SVC
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import classification_report
 
 
-def remove_span_tags(sample: str):
+def remove_span_tags(sample: str) -> str:
+    """
+    Removes span tags from a given text sample
+
+    Args:
+        sample (str): Text sample containing span tags
+    Returns:
+        str: The text sample with the span tags removed
+    """
     return sample.replace(BEGINNING_OF_SPAN, "").replace(END_OF_SPAN, "")
 
 
@@ -42,24 +51,25 @@ overall_metrics = {
     "sigmoid": {"precision": [], "recall": [], "f1": [], "acc": []},
 }
 
-# for i in range(10):
-# for kernel in ["linear", "poly", "rbf", "sigmoid"]:
-svm = SVC(kernel="linear")
-fit_start = time.time()
-svm.fit(X_train_vec, y_train)
-print(f"Fitting took {time.time() - fit_start}")
+for i in range(10):
+    for kernel in ["linear", "poly", "rbf", "sigmoid"]:
+        svm = SVC(kernel="linear")
+        fit_start = time.time()
+        svm.fit(X_train_vec, y_train)
+        print(f"Fitting took {time.time() - fit_start}")
 
-infer_start = time.time()
-y_pred = svm.predict(X_test_vec)
-print(f"Took {time.time() - infer_start} to make {len(y_pred)}")
+        infer_start = time.time()
+        y_pred = svm.predict(X_test_vec)
+        print(f"Took {time.time() - infer_start} to make {len(y_pred)}")
 
-# accuracy = accuracy_score(y_test, y_pred)
-# print("Accuracy:", accuracy)
-this_metrics = classification_report(y_test, y_pred, output_dict=True)
-# overall_metrics[kernel]['precision'].append(this_metrics['weighted avg']['precision'])
-# overall_metrics[kernel]['recall'].append(this_metrics['weighted avg']['recall'])
-# overall_metrics[kernel]['f1'].append(this_metrics['weighted avg']['f1-score'])
-# overall_metrics[kernel]['acc'].append(this_metrics['accuracy'])
+        this_metrics = classification_report(y_test, y_pred, output_dict=True)
+
+    overall_metrics[kernel]["precision"].append(
+        this_metrics["weighted avg"]["precision"]
+    )
+    overall_metrics[kernel]["recall"].append(this_metrics["weighted avg"]["recall"])
+    overall_metrics[kernel]["f1"].append(this_metrics["weighted avg"]["f1-score"])
+    overall_metrics[kernel]["acc"].append(this_metrics["accuracy"])
 
 
 for kernel, metrics in overall_metrics.items():
